@@ -197,6 +197,6 @@ def resnet50(output_layers=None, pretrained=False, **kwargs):
 
 if __name__ == '__main__':
     model = resnet50(output_layers=['layer3'], pretrained=True)
-    img = torch.randn(2, 3, 320, 640)
+    img = torch.randn(2, 3, 320, 320)
     result = model(img)
     print(result.shape)
