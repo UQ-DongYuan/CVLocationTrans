@@ -90,13 +90,11 @@ class FeatureFusionLayer(nn.Module):
     def forward(self, src1, src2, src1_h, src1_w, src2_h, src2_w):
         # source 1 self attention
         q1 = k1 = self.pos_encoding_source1(src1, src1_h, src1_w)
-        print(q1.shape)
         src1_att = self.self_attn_source1(q1, k1, value=src1)[0]
         src1 = src1 + self.sa_dropout1(src1_att)
         src1 = self.sa_norm1(src1)
         # source 2 self attention
         q2 = k2 = self.pos_encoding_source2(src2, src2_h, src2_w)
-        print(q2.shape)
         src2_att = self.self_attn_source2(q2, k2, value=src2)[0]
         src2 = src2 + self.sa_dropout2(src2_att)
         src2 = self.sa_norm2(src2)
