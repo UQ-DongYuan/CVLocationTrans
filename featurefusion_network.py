@@ -28,10 +28,14 @@ class FeatureFusionNetwork(nn.Module):
                 nn.init.xavier_uniform_(p)
 
     def forward(self, source1, source2):
+        # for Position embedding
+        _, _, src1_h, src1_w = source1.shape
+        _, _, src2_h, src2_w = source2.shape
+
         source1 = rearrange(source1, 'n c h w -> n (h w) c')  # B 1600 256 for satellite feature map
         source2 = rearrange(source2, 'n c h w -> n (h w) c')  # B
-        source1_output, source2_output = self.encoder(source1, source2)
-        output = self.decoder(source1_output, source2_output)
+        source1_output, source2_output = self.encoder(source1, source2, src1_h, src1_w, src2_h, src2_w)
+        output = self.decoder(source1_output, source2_output, src1_h, src1_w, src2_h, src2_w)
         return output
 
 
@@ -41,11 +45,11 @@ class FeatureFusionLayer(nn.Module):
                  activation="relu"):
         super().__init__()
         # multi-head self attention
-        self.self_attn_source1 = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
-        self.self_attn_source2 = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
+        self.self_attn_source1 = nn.MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=True)
+        self.self_attn_source2 = nn.MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=True)
         # multi-head cross attention
-        self.cros_attn_source1 = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
-        self.cros_attn_source2 = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
+        self.cros_attn_source1 = nn.MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=True)
+        self.cros_attn_source2 = nn.MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=True)
 
         # Sine-Cosine Position Encoding
         self.pos_encoding_source1 = PositionEncodingSine(d_model)
@@ -83,21 +87,23 @@ class FeatureFusionLayer(nn.Module):
         self.ca_dropout2_1 = nn.Dropout(dropout)
         self.ca_dropout2_2 = nn.Dropout(dropout)
 
-    def forward(self, src1, src2):
+    def forward(self, src1, src2, src1_h, src1_w, src2_h, src2_w):
         # source 1 self attention
-        q1 = k1 = self.pos_encoding_source1(src1)
+        q1 = k1 = self.pos_encoding_source1(src1, src1_h, src1_w)
+        print(q1.shape)
         src1_att = self.self_attn_source1(q1, k1, value=src1)[0]
         src1 = src1 + self.sa_dropout1(src1_att)
         src1 = self.sa_norm1(src1)
         # source 2 self attention
-        q2 = k2 = self.pos_encoding_source2(src2)
+        q2 = k2 = self.pos_encoding_source2(src2, src2_h, src2_w)
+        print(q2.shape)
         src2_att = self.self_attn_source2(q2, k2, value=src2)[0]
         src2 = src2 + self.sa_dropout2(src2_att)
         src2 = self.sa_norm2(src2)
 
         # source 1 cross attention
-        src1_cros = self.cros_attn_source1(query=self.pos_encoding_source1(src1), key=self.pos_encoding_source2(src2),
-                                           value=src2)[0]
+        src1_cros = self.cros_attn_source1(query=self.pos_encoding_source1(src1, src1_h, src1_w),
+                                           key=self.pos_encoding_source2(src2, src2_h, src2_w), value=src2)[0]
         src1 = src1 + self.ca_dropout1_1(src1_cros)
         src1 = self.ca_norm1_1(src1)
         src1_ffn = self.source_1_FFN(src1)
@@ -105,8 +111,8 @@ class FeatureFusionLayer(nn.Module):
         src1 = self.ca_norm1_2(src1)
 
         # source 2 cross attention
-        src2_cros = self.cros_attn_source2(query=self.pos_encoding_source2(src2), key=self.pos_encoding_source1(src1),
-                                           value=src1)[0]
+        src2_cros = self.cros_attn_source2(query=self.pos_encoding_source2(src2, src2_h, src2_w),
+                                           key=self.pos_encoding_source1(src1, src1_h, src1_w), value=src1)[0]
         src2 = src2 + self.ca_dropout2_1(src2_cros)
         src2 = self.ca_norm2_1(src2)
         src2_ffn = self.source_2_FFN(src2)
@@ -124,7 +130,7 @@ class DecoderCFALayer(nn.Module):
         self.pos_encoding_source1 = PositionEncodingSine(d_model)
         self.pos_encoding_source2 = PositionEncodingSine(d_model)
 
-        self.cross_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
+        self.cross_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=True)
         # Implementation of Feedforward model
         self.FFN = nn.Sequential(
             nn.Linear(d_model, dim_feedforward),
@@ -139,9 +145,9 @@ class DecoderCFALayer(nn.Module):
         self.dropout1 = nn.Dropout(dropout)
         self.dropout2 = nn.Dropout(dropout)
 
-    def forward(self, src1, src2):
-        src1_cross = self.cross_attn(query=self.pos_encoding_source1(src1), key=self.pos_encoding_source2(src2),
-                                     value=src2)[0]
+    def forward(self, src1, src2, src1_h, src1_w, src2_h, src2_w):
+        src1_cross = self.cross_attn(query=self.pos_encoding_source1(src1, src1_h, src1_w),
+                                     key=self.pos_encoding_source2(src2, src2_h, src2_w), value=src2)[0]
         src1 = src1 + self.dropout1(src1_cross)
         src1 = self.norm1(src1)
         src1_ffn = self.FFN(src1)
@@ -157,12 +163,12 @@ class Encoder(nn.Module):
         self.layers = _get_clones(featurefusion_layer, num_layers)
         self.num_layers = num_layers
 
-    def forward(self, src1, src2):
+    def forward(self, src1, src2, src1_h, src1_w, src2_h, src2_w):
         output1 = src1
         output2 = src2
 
         for layer in self.layers:
-            output1, output2 = layer(output1, output2)
+            output1, output2 = layer(output1, output2, src1_h, src1_w, src2_h, src2_w)
 
         return output1, output2
 
@@ -173,11 +179,11 @@ class Decoder(nn.Module):
         self.layers = _get_clones(decoderCFA_layer, 1)
         self.norm = norm
 
-    def forward(self, source1, source2):
+    def forward(self, source1, source2, src1_h, src1_w, src2_h, src2_w):
         output = source1
 
         for layer in self.layers:
-            output = layer(output, source2)
+            output = layer(output, source2, src1_h, src1_w, src2_h, src2_w)
 
         if self.norm is not None:
             output = self.norm(output)

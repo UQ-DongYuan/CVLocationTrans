@@ -1,6 +1,8 @@
 import math
 import torch
 from torch import nn
+from einops.einops import rearrange
+
 
 class PositionEncodingSine(nn.Module):
     """
@@ -33,14 +35,17 @@ class PositionEncodingSine(nn.Module):
 
         self.register_buffer('pe', pe.unsqueeze(0), persistent=False)  # [1, C, H, W]
 
-    def forward(self, x):
+    def forward(self, x, x_h, x_w):
         """
         Args:
             x: [N, C, H, W]
         """
-        return x + self.pe[:, :, :x.size(2), :x.size(3)]
+        return x + rearrange(self.pe[:, :, :x_h, :x_w], 'n c h w -> n (h w) c')
 
 
 if __name__ == '__main__':
     pe = PositionEncodingSine(d_model=256)
     print(pe.pe.shape)
+    x = torch.randn(1, 1600, 256)
+    result = pe(x, 40, 40)
+    print(result.shape)

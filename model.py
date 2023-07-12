@@ -12,8 +12,8 @@ class CVLocationTrans(nn.Module):
         self.grd_extractor = resnet50(output_layers=['layer3'], pretrained=True)
 
         # conv 1x1
-        self.sat_proj = nn.Conv2d(in_channels=1024, out_channels=self.feature_fusion_network.d_model, kernel_size=1)
-        self.grd_proj = nn.Conv2d(in_channels=1024, out_channels=self.feature_fusion_network.d_model, kernel_size=1)
+        self.sat_proj = nn.Conv2d(in_channels=1024, out_channels=d_model, kernel_size=1)
+        self.grd_proj = nn.Conv2d(in_channels=1024, out_channels=d_model, kernel_size=1)
 
         self.feature_fusion_network = FeatureFusionNetwork()
 
@@ -30,7 +30,7 @@ class CVLocationTrans(nn.Module):
         feat_fusion_output = self.feature_fusion_network(sat_feats, grd_feats)
 
         pred_location = self.location_head(feat_fusion_output)
-        coordinate_reg = self.coordinator_head(feat_fusion_output)
+        coordinate_reg = self.coordinator_head(feat_fusion_output).sigmoid()
 
         return pred_location, coordinate_reg
 
@@ -54,3 +54,15 @@ class MLP(nn.Module):
         for i, layer in enumerate(self.layers):
             x = F.relu(layer(x)) if i < self.num_layers - 1 else layer(x)
         return x
+
+
+if __name__ == '__main__':
+    model = CVLocationTrans()
+    sat = torch.randn(1, 3, 320, 320)
+    grd = torch.randn(1, 3, 320, 640)
+
+    location, xy = model(sat, grd)
+    print(location.shape)
+    print(xy.shape)
+
+
