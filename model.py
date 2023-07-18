@@ -57,9 +57,9 @@ class MLP(nn.Module):
 
 
 if __name__ == '__main__':
-    model = CVLocationTrans()
-    sat = torch.randn(1, 3, 320, 320)
-    grd = torch.randn(1, 3, 320, 640)
+    model = CVLocationTrans().to('cuda')
+    sat = torch.randn(4, 3, 256, 256).to('cuda')
+    grd = torch.randn(4, 3, 256, 512).to('cuda')
 
     location, xy = model(sat, grd)
     print(location.shape)
