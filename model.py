@@ -17,7 +17,7 @@ class CVLocationTrans(nn.Module):
 
         self.feature_fusion_network = FeatureFusionNetwork()
 
-        self.location_head = MLP(d_model, d_model, 2, num_layers=3)
+        self.location_head = MLP(d_model, d_model, 1, num_layers=3)
         self.coordinator_head = MLP(d_model, d_model, 2, num_layers=3)
 
     def forward(self, sat, grd):
