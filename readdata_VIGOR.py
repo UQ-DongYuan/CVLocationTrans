@@ -205,7 +205,6 @@ class VIGOR(Dataset):
 
             return sat_img, grd_img, (index, ty, tx)
 
-
 def data_collect(batch):
     sat_imgs = []
     grd_imgs = []

@@ -61,6 +61,7 @@ if __name__ == '__main__':
     sat = torch.randn(4, 3, 256, 256).to('cuda')
     grd = torch.randn(4, 3, 256, 512).to('cuda')
 
+
     location, xy = model(sat, grd)
     print(location.shape)
     print(xy.shape)
