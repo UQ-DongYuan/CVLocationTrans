@@ -3,7 +3,6 @@ from position_encoding import PositionEncodingSine
 import copy
 from einops.einops import rearrange
 
-
 class FeatureFusionNetwork(nn.Module):
 
     def __init__(self, d_model=256, nhead=8, num_featurefusion_layers=4,
@@ -38,7 +37,6 @@ class FeatureFusionNetwork(nn.Module):
         output = self.decoder(source1_output, source2_output, src1_h, src1_w, src2_h, src2_w)
         return output
 
-
 class FeatureFusionLayer(nn.Module):
 
     def __init__(self, d_model, nhead, dim_feedforward=1024, dropout=0.1,
@@ -58,7 +56,7 @@ class FeatureFusionLayer(nn.Module):
         # Implementation of Feedforward model in Cross Attention Block
         self.source_1_FFN = nn.Sequential(
             nn.Linear(d_model, dim_feedforward),
-            nn.ReLU(),          # activation: 'relu'
+            nn.ReLU(),  # activation: 'relu'
             nn.Dropout(dropout),
             nn.Linear(dim_feedforward, d_model)
         )
@@ -76,12 +74,12 @@ class FeatureFusionLayer(nn.Module):
         self.sa_dropout2 = nn.Dropout(dropout)
 
         # Add & Norm for cross attention block
-           # source 1
+        # source 1
         self.ca_norm1_1 = nn.LayerNorm(d_model)
         self.ca_norm1_2 = nn.LayerNorm(d_model)
         self.ca_dropout1_1 = nn.Dropout(dropout)
         self.ca_dropout1_2 = nn.Dropout(dropout)
-            # source 2
+        # source 2
         self.ca_norm2_1 = nn.LayerNorm(d_model)
         self.ca_norm2_2 = nn.LayerNorm(d_model)
         self.ca_dropout2_1 = nn.Dropout(dropout)
@@ -119,7 +117,6 @@ class FeatureFusionLayer(nn.Module):
 
         return src1, src2
 
-
 class DecoderCFALayer(nn.Module):
     def __init__(self, d_model, nhead, dim_feedforward=1024, dropout=0.1, activation="relu"):
         super().__init__()
@@ -154,7 +151,6 @@ class DecoderCFALayer(nn.Module):
 
         return src1
 
-
 class Encoder(nn.Module):
     def __init__(self, featurefusion_layer, num_layers):
         super().__init__()
@@ -169,7 +165,6 @@ class Encoder(nn.Module):
             output1, output2 = layer(output1, output2, src1_h, src1_w, src2_h, src2_w)
 
         return output1, output2
-
 
 class Decoder(nn.Module):
     def __init__(self, decoderCFA_layer, norm=None):

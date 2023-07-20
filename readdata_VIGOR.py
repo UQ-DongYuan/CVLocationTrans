@@ -174,7 +174,7 @@ class VIGOR(Dataset):
             row_offset_resized = np.round(row_offset / 640 * self.sat_size[0])
             col_offset_resized = np.round(col_offset / 640 * self.sat_size[0])
             # grd position (Gy, Gx) related to sat_size (256, 256)
-            ground_y, ground_x = self.sat_size[0] / 2 + row_offset_resized, self.sat_size[1] / 2 - col_offset_resized
+            ground_y, ground_x = (self.sat_size[0] / 2) - 1 + row_offset_resized, (self.sat_size[1] / 2) - 1 - col_offset_resized
             # compute grid index
             grid_y, grid_x = int(ground_y // self.stride), int(ground_x // self.stride)
             index = self.grid[grid_y, grid_x].item()   # [0, 1023]
@@ -197,15 +197,15 @@ class VIGOR(Dataset):
             row_offset_resized = np.round(row_offset / 640 * self.sat_size[0])
             col_offset_resized = np.round(col_offset / 640 * self.sat_size[0])
             # grd position (Gy, Gx) related to sat_size (256, 256)
-            ground_y, ground_x = self.sat_size[0] / 2 + row_offset_resized, self.sat_size[1] / 2 - col_offset_resized
+            ground_y, ground_x = (self.sat_size[0] / 2) - 1 + row_offset_resized, (self.sat_size[1] / 2) - 1 - col_offset_resized
             # compute grid index
             grid_y, grid_x = int(ground_y // self.stride), int(ground_x // self.stride)
             index = self.grid[grid_y, grid_x].item()   # [0, 1023]
             ty, tx = ground_y / self.stride - grid_y, ground_x / self.stride - grid_x
 
-            return sat_img, grd_img, (index, ty, tx)
+            return sat_img, grd_img, (index, ty, tx), (ground_y, ground_x)
 
-def data_collect(batch):
+def train_data_collect(batch):
     sat_imgs = []
     grd_imgs = []
     labels = []
@@ -215,12 +215,25 @@ def data_collect(batch):
         labels.append(sample[2])
     return torch.stack(sat_imgs, 0), torch.stack(grd_imgs, 0), labels
 
+def val_data_collect(batch):
+    sat_imgs = []
+    grd_imgs = []
+    labels = []
+    ground_yx = []
+    for sample in batch:
+        sat_imgs.append(sample[0])
+        grd_imgs.append(sample[1])
+        labels.append(sample[2])
+        ground_yx.append(sample[3])
+    return torch.stack(sat_imgs, 0), torch.stack(grd_imgs, 0), labels, ground_yx
+
 
 if __name__ == '__main__':
-    dataset = VIGOR(area='same', train_test='train', val=False)
-    dataloader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=data_collect)
-    for i, (sat, grd, label) in enumerate(dataloader):
+    dataset = VIGOR(area='same', train_test='train', val=True)
+    dataloader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=val_data_collect)
+    for i, (sat, grd, label, ground_yx) in enumerate(dataloader):
         print(sat.shape)
         print(grd.shape)
         print(label)
+        print(ground_yx)
         break
