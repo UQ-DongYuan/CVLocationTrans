@@ -106,7 +106,7 @@ def main():
             distance_median_error = np.median(distances)
 
             val_loss_file = 'val_loss.txt'
-            val_distance_error = 'val_distance_error'
+            val_distance_error = 'val_distance_error.txt'
             with open(val_loss_file, 'a') as file:
                 file.write(f"Epoch {epoch_idx} val Loss: {curr_val_loss}" + '\n')
             print(f"Epoch {epoch_idx} validation Loss: {curr_val_loss}")
