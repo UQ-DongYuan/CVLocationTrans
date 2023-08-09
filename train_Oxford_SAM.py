@@ -7,7 +7,8 @@ import os
 import numpy as np
 import torch
 from loss import cross_entropy_loss, regression_loss
-
+from sam import SAM
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 # config
 backbone_lr = 1e-5
@@ -44,7 +45,8 @@ def main():
             "lr": backbone_lr,
         },
     ]
-    optimizer = optim.AdamW(param_dicts, lr=otherlayers_lr, weight_decay=weight_decay)
+    base_optimizer = optim.AdamW
+    optimizer = SAM(param_dicts, base_optimizer, rho=2, adaptive=True, lr=otherlayers_lr, weight_decay=weight_decay)
 
     # learning rate scheduler
     # lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 50)
@@ -58,23 +60,29 @@ def main():
             sat_img = sat.to(device)
             grd_img = grd.to(device)
             targets = labels
-
+            # Use SAM method to optimize model
             optimizer.zero_grad()
             pred_location, coordinate_reg = model(sat_img, grd_img)
             location_loss = cross_entropy_loss(pred_location, targets)
             txy_loss = regression_loss(coordinate_reg, targets)
             loss = lambda_cross_entropy * location_loss + lambda_regression * txy_loss
-
-            loss.backward()
-            optimizer.step()
-
             epoch_loss.append(loss.item())
+            loss.backward()
+
+            optimizer.first_step(zero_grad=True)
+            pred_location, coordinate_reg = model(sat_img, grd_img)
+            location_loss = cross_entropy_loss(pred_location, targets)
+            txy_loss = regression_loss(coordinate_reg, targets)
+            loss = lambda_cross_entropy * location_loss + lambda_regression * txy_loss
+            loss.backward()
+            optimizer.second_step(zero_grad=True)
+
         curr_training_loss = sum(epoch_loss) / (iteration + 1)
-        train_file = 'training_robotcar_loss.txt'
+        train_file = 'training_robotcar_loss_SAM.txt'
         with open(train_file, 'a') as file:
             file.write(f"Epoch {epoch_idx} Training Loss: {curr_training_loss}" + '\n')
 
-        print(f"Epoch {epoch_idx} RobotCar Training Loss: {curr_training_loss}")
+        print(f"Epoch {epoch_idx} Training Loss: {curr_training_loss}")
 
         model.eval()
         val_epoch_loss = []
@@ -104,20 +112,20 @@ def main():
             distance_mean_error = np.mean(distances)
             distance_median_error = np.median(distances)
 
-            val_loss_file = 'val_robotcar_loss.txt'
-            val_distance_error = 'val_robotcar_distance_error.txt'
+            val_loss_file = 'robotcar_val_loss_SAM.txt'
+            val_distance_error = 'robotcar_val_distance_error_SAM.txt'
             with open(val_loss_file, 'a') as file:
                 file.write(f"Epoch {epoch_idx} val Loss: {curr_val_loss}" + '\n')
             print(f"Epoch {epoch_idx} validation Loss: {curr_val_loss}")
             with open(val_distance_error, 'a') as file:
                 file.write(f"Epoch {epoch_idx} val distance error: {distance_mean_error}, {distance_median_error}" + '\n')
-            print(f"Epoch {epoch_idx} Robotcar validation distance mean error: {distance_mean_error}")
-            print(f"Epoch {epoch_idx} Robotcar validation distance median error: {distance_median_error}")
+            print(f"Epoch {epoch_idx} validation distance mean error: {distance_mean_error}")
+            print(f"Epoch {epoch_idx} validation distance median error: {distance_median_error}")
 
             if distance_mean_error < best_mean_distance_error:
                 if not os.path.exists("checkpoint"):
                     os.mkdir("checkpoint")
-                model_path = "checkpoint/CVLocationTrans_RobotCar.pth"
+                model_path = "checkpoint/CVLocationTrans_RobotCar_SAM.pth"
                 save_checkpoint(
                     {"state_dict": model.state_dict(),
                      "optimizer": optimizer.state_dict()
@@ -128,4 +136,5 @@ def main():
                 print(f"Model saved at distance error: {best_mean_distance_error}")
 
 if __name__ == '__main__':
+    # RobotCar SAM training
     main()
