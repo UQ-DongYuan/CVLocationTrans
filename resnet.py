@@ -4,6 +4,7 @@ from collections import OrderedDict
 import torch.utils.model_zoo as model_zoo
 from torchvision.models.resnet import model_urls
 import torch
+import torch.nn.functional as F
 
 def conv3x3(in_planes, out_planes, stride=1, dilation=1):
     """3x3 convolution with padding"""
@@ -93,8 +94,9 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
     """ ResNet network module. Allows extracting specific feature blocks."""
-    def __init__(self, block, layers, output_layers,  inplanes=64, dilation_factor=1):
+    def __init__(self, block, layers, output_layers, sat_grd, inplanes=64, dilation_factor=1):
         self.inplanes = inplanes
+        self.sat_grd = sat_grd
         super(ResNet, self).__init__()
         self.output_layers = output_layers
         self.conv1 = nn.Conv2d(3, inplanes, kernel_size=7, stride=2, padding=3,
@@ -157,7 +159,8 @@ class ResNet(nn.Module):
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
-
+        if self.sat_grd == 'sat':
+            x = F.adaptive_avg_pool2d(x, (32, 32))
         return x
 
 def resnet18(output_layers=None, pretrained=False, **kwargs):
@@ -178,7 +181,7 @@ def resnet18(output_layers=None, pretrained=False, **kwargs):
     return model
 
 
-def resnet50(output_layers=None, pretrained=False, **kwargs):
+def resnet50(sat_grd, output_layers=None, pretrained=False, **kwargs):
     """Constructs a ResNet-50 model.
     """
 
@@ -189,14 +192,14 @@ def resnet50(output_layers=None, pretrained=False, **kwargs):
             if l not in ['conv1', 'layer1', 'layer2', 'layer3', 'layer4', 'fc']:
                 raise ValueError('Unknown layer: {}'.format(l))
 
-    model = ResNet(Bottleneck, [3, 4, 6, 3], output_layers, **kwargs)
+    model = ResNet(Bottleneck, [3, 4, 6, 3], output_layers, sat_grd, **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['resnet50']), strict=False)
     return model
 
 
 if __name__ == '__main__':
-    model = resnet50(output_layers=['layer3'], pretrained=True)
-    img = torch.randn(2, 3, 320, 320)
+    model = resnet50('sat', output_layers=['layer3'], pretrained=True)
+    img = torch.randn(2, 3, 512, 512)
     result = model(img)
     print(result.shape)

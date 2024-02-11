@@ -31,8 +31,8 @@ class FeatureFusionNetwork(nn.Module):
         _, _, src1_h, src1_w = source1.shape
         _, _, src2_h, src2_w = source2.shape
 
-        source1 = rearrange(source1, 'n c h w -> n (h w) c')  # B 1600 256 for satellite feature map
-        source2 = rearrange(source2, 'n c h w -> n (h w) c')  # B
+        source1 = rearrange(source1, 'n c h w -> n (h w) c')
+        source2 = rearrange(source2, 'n c h w -> n (h w) c')
         source1_output, source2_output = self.encoder(source1, source2, src1_h, src1_w, src2_h, src2_w)
         output = self.decoder(source1_output, source2_output, src1_h, src1_w, src2_h, src2_w)
         return output

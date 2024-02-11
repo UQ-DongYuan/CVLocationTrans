@@ -8,8 +8,8 @@ import torch.nn.functional as F
 class CVLocationTrans(nn.Module):
     def __init__(self, d_model=256):
         super(CVLocationTrans, self).__init__()
-        self.sat_extractor = resnet50(output_layers=['layer3'], pretrained=True)
-        self.grd_extractor = resnet50(output_layers=['layer3'], pretrained=True)
+        self.sat_extractor = resnet50('sat', output_layers=['layer3'], pretrained=True)
+        self.grd_extractor = resnet50('grd', output_layers=['layer3'], pretrained=True)
 
         # conv 1x1
         self.sat_proj = nn.Conv2d(in_channels=1024, out_channels=d_model, kernel_size=1)
@@ -58,9 +58,8 @@ class MLP(nn.Module):
 
 if __name__ == '__main__':
     model = CVLocationTrans().to('cuda')
-    sat = torch.randn(4, 3, 256, 256).to('cuda')
-    grd = torch.randn(4, 3, 256, 512).to('cuda')
-
+    sat = torch.randn(4, 3, 512, 512).to('cuda')
+    grd = torch.randn(4, 3, 160, 240).to('cuda')
 
     location, xy = model(sat, grd)
     print(location.shape)
