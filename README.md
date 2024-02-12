@@ -36,6 +36,15 @@ Please follow the guidelines from https://github.com/Jeff-Zilence/VIGOR to downl
 Please contact the authors from https://github.com/tudelft-iv/CrossViewMetricLocalization/tree/main to get the processed Oxford RobotCar ground view images and the corresponding satellite images.
 Please download the `Oxford_split` directory for data splitting. When using `readdata_Oxford.py` to load training or testing data, please modify `self.grd_image_root` and `full_satellite_map` to your data storing directory.
 
+### 3. Training and Evaluation
+**Model training:** <br>
+Training on VIGOR dataset:<br>
+Run `python train_VIGOR.py` or `python train_VIGOR_SAM.py`. <br> 
+Change the config parameter: `area` at the beginning of the training file to `same` or `cross` for different training setups. <br>
+Training on Oxford RobotCar dataset: <br>
+Run `python train_Oxford.py` or `python train_Oxford_SAM.py`. <br>
+
+
 ---
 
 ### Citation Information
