@@ -32,7 +32,7 @@ def main():
                                   shuffle=False, drop_last=True, collate_fn=val_data_collect)
     torch.cuda.empty_cache()
     model = CVLocationTrans(d_model=256).to(device)
-    checkpoint_path = 'checkpoint/CVLocationTrans_RobotCar_SAM_512.pth'
+    checkpoint_path = 'checkpoint/CVLocationTrans_RobotCar_SAM_512_max.pth'
     checkpoint = torch.load(checkpoint_path)
     model.load_state_dict(checkpoint['state_dict'])
     model.eval()
@@ -56,6 +56,9 @@ def main():
 
         distance_mean_error = np.mean(distances)
         distance_median_error = np.median(distances)
-        print(f'saturn same area positive distance mean error: {distance_mean_error}')
-        print(f'saturn same area positive distance median error: {distance_median_error}')
+        print(f'distance mean error: {distance_mean_error}')
+        print(f'distance median error: {distance_median_error}')
 
+
+if __name__ == '__main__':
+    main()
