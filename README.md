@@ -17,14 +17,8 @@ Cross-view image geo-localization aims to determine the locations of outdoor rob
 ---
 ### 1. Requirement
 
-
 '''
-- Python >= 3.9
-- Pytorch == 1.21.1
-- torchvision == 0.13.1
-- scikit-learn == 1.2.2
-- numpy == 1.21.1
-- einops == 0.6.1
+Python >= 3.9   Pytorch == 1.21.1  torchvision == 0.13.1  scikit-learn == 1.2.2  numpy == 1.21.1  einops == 0.6.1
 '''
 
 
