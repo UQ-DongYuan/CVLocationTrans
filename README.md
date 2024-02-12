@@ -30,6 +30,24 @@ please follow the requirement to setup your running environment
 ### 2. Datasets
 
 
+---
+
+### Citation Information
+<p align="justify">
+If our work is useful to your research, please kindly recognize our contributions by citing our WACV paper:
+</p>
+
+```
+@InProceedings{Yuan_2024_WACV,
+    author    = {Yuan, Dong and Maire, Frederic and Dayoub, Feras},
+    title     = {Cross-Attention Between Satellite and Ground Views for Enhanced Fine-Grained Robot Geo-Localization},
+    booktitle = {Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)},
+    month     = {January},
+    year      = {2024},
+    pages     = {1249-1256}
+}
+```
+
 
 
 
