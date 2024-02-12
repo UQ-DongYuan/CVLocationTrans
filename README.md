@@ -46,20 +46,17 @@ Change the config parameter: `area` at the beginning of the training file to `sa
 Training on Oxford RobotCar dataset: <br>
 Run `python train_Oxford.py` or `python train_Oxford_SAM.py`. <br>
 <br>
-**Model evaluation**<br>
 
-Our trained models can be found at: <br>
-<br>
+**Model evaluation:** <br>
+Our trained model weights can be found at: https://drive.google.com/drive/folders/1351rCOF1B1j3J3Xesw78UvCi-wGYrfDk?usp=sharing  <br>
 
-<br>
-Evaluation of VIGOR Dataset: <br>
-In `test_semi_positive_VIGOR.py`: <br>
+Evaluation of VIGOR Dataset:  <br>
+In `test_semi_positive_VIGOR.py`:  <br>
 1. Change the values of `semi_postive_index` for testing only *positive satellite images* or *positive + semi-positive* satellite images. <br>
 2. Change the value of `area` to `same` or `cross` for different test settings. <br>
 3. Change `checkpoint_path` to the correct path of the provided pre-trained model weights.
 4. Run `python test_semi_positive_VIGOR.py`. <br>
 
-<br>
 Evaluation of Oxford RobotCar Dataset: <br>
 1. Change the value of `self.test_grd_img_list` in `readdata_Oxford.py` to select one of three different testing traversals.<br>
 2. In `test_Oxford.py`, Change `checkpoint_path` to the correct path of the provided pre-trained model weights.<br>
