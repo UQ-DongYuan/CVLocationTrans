@@ -38,12 +38,32 @@ Please download the `Oxford_split` directory for data splitting. When using `rea
 
 ### 3. Training and Evaluation
 **Model training:** <br>
+<br>
 Training on VIGOR dataset:<br>
 Run `python train_VIGOR.py` or `python train_VIGOR_SAM.py`. <br> 
 Change the config parameter: `area` at the beginning of the training file to `same` or `cross` for different training setups. <br>
+<br>
 Training on Oxford RobotCar dataset: <br>
 Run `python train_Oxford.py` or `python train_Oxford_SAM.py`. <br>
+<br>
+**Model evaluation**<br>
 
+Our trained models can be found at: <br>
+<br>
+
+<br>
+Evaluation of VIGOR Dataset: <br>
+In `test_semi_positive_VIGOR.py`: <br>
+1. Change the values of `semi_postive_index` for testing only *positive satellite images* or *positive + semi-positive* satellite images. <br>
+2. Change the value of `area` to `same` or `cross` for different test settings. <br>
+3. Change `checkpoint_path` to the correct path of the provided pre-trained model weights.
+4. Run `python test_semi_positive_VIGOR.py`. <br>
+
+<br>
+Evaluation of Oxford RobotCar Dataset: <br>
+1. Change the value of `self.test_grd_img_list` in `readdata_Oxford.py` to select one of three different testing traversals.<br>
+2. In `test_Oxford.py`, Change `checkpoint_path` to the correct path of the provided pre-trained model weights.<br>
+3. Run `test_Oxford.py` <br>
 
 ---
 
