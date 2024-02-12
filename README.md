@@ -6,8 +6,7 @@
 
 
 
-![](wacv-2076.pdf)
-
+![](README_data/system.PNG)
 
 
 ### Paper Abstract
