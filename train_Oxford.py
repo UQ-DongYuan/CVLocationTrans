@@ -19,9 +19,10 @@ batch_size = 4
 lambda_cross_entropy = 1
 lambda_regression = 1
 device = "cuda" if torch.cuda.is_available() else "cpu"
-stride = 8
+input_size = 512
 grid_size = (32, 32)
-resolution = 0.28875   # 800 / 256 x 0.0924
+stride = input_size / grid_size[0]
+resolution = 0.144375   # 800 / 512 x 0.0924
 
 def save_checkpoint(state, filename="checkpoint.pth"):
     torch.save(state, filename)

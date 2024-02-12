@@ -1,5 +1,5 @@
 from model import CVLocationTrans
-from readdata_Oxford import RobotCar, train_data_collect, val_data_collect
+from readdata_VIGOR import VIGOR, train_data_collect, val_data_collect
 from torch.utils.data import DataLoader
 import torch.optim as optim
 from tqdm import tqdm
@@ -8,9 +8,10 @@ import numpy as np
 import torch
 from loss import cross_entropy_loss, regression_loss
 from sam import SAM
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+
 
 # config
+area = 'same'
 backbone_lr = 1e-5
 otherlayers_lr = 1e-4
 weight_decay = 1e-4
@@ -20,20 +21,19 @@ batch_size = 4
 lambda_cross_entropy = 1
 lambda_regression = 1
 device = "cuda" if torch.cuda.is_available() else "cpu"
-input_size = 512
+stride = 8
 grid_size = (32, 32)
-stride = input_size / grid_size[0]
-resolution = 0.144375   # 800 / 512 x 0.0924
+resolution = 0.285   # 640 / 256 x 0.114
 
 def save_checkpoint(state, filename="checkpoint.pth"):
     torch.save(state, filename)
 
 def main():
     # setup train/val dataset
-    train_dataset = RobotCar(mode='train')
+    train_dataset = VIGOR(area=area, train_test='train', val=False)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4,
                                   shuffle=True, drop_last=True, collate_fn=train_data_collect)
-    val_dataset = RobotCar(mode='val')
+    val_dataset = VIGOR(area=area, train_test='train', val=True)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, num_workers=4,
                                 shuffle=False, drop_last=True, collate_fn=val_data_collect)
     torch.cuda.empty_cache()
@@ -79,7 +79,7 @@ def main():
             optimizer.second_step(zero_grad=True)
 
         curr_training_loss = sum(epoch_loss) / (iteration + 1)
-        train_file = 'training_robotcar_loss_SAM_512.txt'
+        train_file = 'training_loss.txt'
         with open(train_file, 'a') as file:
             file.write(f"Epoch {epoch_idx} Training Loss: {curr_training_loss}" + '\n')
 
@@ -113,8 +113,8 @@ def main():
             distance_mean_error = np.mean(distances)
             distance_median_error = np.median(distances)
 
-            val_loss_file = 'robotcar_val_loss_SAM_512.txt'
-            val_distance_error = 'robotcar_val_distance_error_SAM_512.txt'
+            val_loss_file = 'val_loss.txt'
+            val_distance_error = 'val_distance_error.txt'
             with open(val_loss_file, 'a') as file:
                 file.write(f"Epoch {epoch_idx} val Loss: {curr_val_loss}" + '\n')
             print(f"Epoch {epoch_idx} validation Loss: {curr_val_loss}")
@@ -126,7 +126,7 @@ def main():
             if distance_mean_error < best_mean_distance_error:
                 if not os.path.exists("checkpoint"):
                     os.mkdir("checkpoint")
-                model_path = "checkpoint/CVLocationTrans_RobotCar_SAM_512.pth"
+                model_path = "checkpoint/CVLocationTrans_SAM.pth"
                 save_checkpoint(
                     {"state_dict": model.state_dict(),
                      "optimizer": optimizer.state_dict()
@@ -137,5 +137,5 @@ def main():
                 print(f"Model saved at distance error: {best_mean_distance_error}")
 
 if __name__ == '__main__':
-    # RobotCar SAM training
     main()
+

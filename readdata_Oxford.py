@@ -7,6 +7,9 @@ import os
 import cv2
 import random
 import math
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+
 
 def input_transform(size):
     return transforms.Compose([
@@ -24,8 +27,8 @@ class RobotCar(Dataset):
         # read the full satellite image into memory
         full_satellite_map = cv2.imread('/media/dongyuan/DATA/Oxford_processed_grd/satellite_map_new.png')
         self.full_satellite_map = cv2.cvtColor(full_satellite_map, cv2.COLOR_BGR2RGB)
-        self.sat_size = (256, 256)
-        self.grd_size = (256, 384)
+        self.sat_size = (512, 512)
+        self.grd_size = (160, 240)
         # check use correct mode
         assert self.mode in ['train', 'val', 'test']
         # load ground image list for training, validation or testing
@@ -53,7 +56,6 @@ class RobotCar(Dataset):
                     self.val_grd_img_list.append(content.split(" "))
             with open('Oxford_split/val_yaw.npy', 'rb') as f:
                 self.val_yaw = np.load(f)
-
             self.valNum = len(self.val_grd_img_list)
             valarray = np.array(self.val_grd_img_list)
             self.valUTM = np.transpose(valarray[:, 2:].astype(np.float64))
@@ -81,7 +83,11 @@ class RobotCar(Dataset):
                     test_2015_02_10_11_58_05.append(content.split(" "))
             with open('Oxford_split/test_yaw.npy', 'rb') as f:
                 self.test_yaw = np.load(f)
+                print(self.test_yaw[0:1673].shape)
 
+            print(len(test_2015_08_14_14_54_57))
+            print(len(test_2015_08_12_15_04_18))
+            print(len(test_2015_02_10_11_58_05))
             self.test_grd_img_list = test_2015_08_14_14_54_57 + test_2015_08_12_15_04_18 + test_2015_02_10_11_58_05
             self.testNum = len(self.test_grd_img_list)
             testarray = np.array(self.test_grd_img_list)
@@ -124,12 +130,11 @@ class RobotCar(Dataset):
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225]),
         ])
-
-        self.stride = 8  # total CNN down-sampling stride
-        feature_len = int(self.sat_size[0] / self.stride) ** 2
+        feature_len = 1024
+        grid_size = (32, 32)
+        self.stride = self.sat_size[0] / grid_size[0]
         self.grid = torch.arange(0, feature_len, 1)
-        self.grid = torch.reshape(self.grid, (int(self.sat_size[0] / self.stride),
-                                              int(self.sat_size[0] / self.stride)))  # 32 x 32
+        self.grid = torch.reshape(self.grid, grid_size)  # 32 x 32
 
     def __len__(self):
         if self.mode == 'train':
@@ -174,7 +179,7 @@ class RobotCar(Dataset):
             # get rotated ground position on (800, 800) rotated satellite image
             grd_rot_col, grd_rot_raw = int(grd_rot_col.item() - 200), int(grd_rot_raw.item() - 200)
 
-            # get ground position (Gx, Gy) related to sat_size (256, 256)
+            # get ground position (Gx, Gy) related to sat_size:q
             ground_y, ground_x = int(grd_rot_raw / 800 * self.sat_size[0]), int(grd_rot_col / 800 * self.sat_size[1])
             # compute grid index
             grid_y, grid_x = int(ground_y // self.stride), int(ground_x // self.stride)
@@ -293,7 +298,6 @@ def val_data_collect(batch):
         labels.append(sample[2])
         ground_yx.append(sample[3])
     return torch.stack(sat_imgs, 0), torch.stack(grd_imgs, 0), labels, ground_yx
-
 
 if __name__ == '__main__':
     dataset = RobotCar(mode='test')

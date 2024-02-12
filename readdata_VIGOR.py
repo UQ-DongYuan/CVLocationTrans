@@ -1,5 +1,4 @@
 import math
-
 import torch
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
@@ -8,7 +7,7 @@ import numpy as np
 import os
 import random
 from sklearn.model_selection import train_test_split
-import operator
+
 def input_transform(size):
     return transforms.Compose([
         transforms.Resize(size=tuple(size)),
@@ -19,12 +18,13 @@ def input_transform(size):
 
 # Borrow from https://github.com/tudelft-iv/CrossViewMetricLocalization/blob/main/readdata_VIGOR.py#L194
 class VIGOR(Dataset):
-    def __init__(self, area, train_test, val):
+    def __init__(self, area, train_test, val, semi_index = None):
         super(VIGOR, self).__init__()
         self.root = '/media/dongyuan/DATA/VIGOR'
         self.area = area
         self.validation = val  # for loading validation data list
         self.train_test = train_test  # for load training, validation or testing data list
+        self.semi_index = semi_index
         self.sat_size = [256, 256]  # [320, 320] or [512, 512]
         self.grd_size = [256, 512]  # [320, 640]  # [224, 1232]
         label_root = 'splits'
@@ -89,7 +89,7 @@ class VIGOR(Dataset):
                     label = []
                     for i in [1, 4, 7, 10]:
                         label.append(self.train_sat_index_dict[data[i]])
-                    label = np.array(label).astype(np.int)
+                    label = np.array(label).astype(int)
                     delta = np.array([data[2:4], data[5:7], data[8:10], data[11:13]]).astype(float)
                     self.train_list.append(os.path.join(self.root, city, 'panorama', data[0]))
                     self.train_label.append(label)
@@ -124,7 +124,7 @@ class VIGOR(Dataset):
                         label = []
                         for i in [1, 4, 7, 10]:
                             label.append(self.test_sat_index_dict[data[i]])
-                        label = np.array(label).astype(np.int)
+                        label = np.array(label).astype(int)
                         delta = np.array([data[2:4], data[5:7], data[8:10], data[11:13]]).astype(float)
                         self.val_list.append(os.path.join(self.root, city, 'panorama', data[0]))
                         self.val_label.append(label)
@@ -205,6 +205,27 @@ class VIGOR(Dataset):
 
             return sat_img, grd_img, (index, ty, tx), (ground_y, ground_x)
 
+        if self.train_test == 'test' and not self.validation:
+            # load validation ground image
+            grd_img = Image.open(self.val_list[index]).convert('RGB')
+            grd_img = self.grd_transform(grd_img)
+
+            pos_index = self.semi_index  # choose one of the positive or semi-positive satellite patch [0, 1, 2, 3]
+            sat_img = Image.open(self.test_sat_list[self.val_label[index][pos_index]])
+            [row_offset, col_offset] = self.val_delta[index, pos_index]  # delta = [delta_lat, delta_lon]
+
+            sat_img = self.sat_transform(sat_img.convert('RGB'))
+            row_offset_resized = np.round(row_offset / 640 * self.sat_size[0])
+            col_offset_resized = np.round(col_offset / 640 * self.sat_size[0])
+            # grd position (Gy, Gx) related to sat_size (256, 256)
+            ground_y, ground_x = (self.sat_size[0] / 2) - 1 + row_offset_resized, (self.sat_size[1] / 2) - 1 - col_offset_resized
+            # compute grid index
+            grid_y, grid_x = int(ground_y // self.stride), int(ground_x // self.stride)
+            index = self.grid[grid_y, grid_x].item()   # [0, 1023]
+            ty, tx = ground_y / self.stride - grid_y, ground_x / self.stride - grid_x
+
+            return sat_img, grd_img, (index, ty, tx), (ground_y, ground_x)
+
 def train_data_collect(batch):
     sat_imgs = []
     grd_imgs = []
@@ -230,10 +251,11 @@ def val_data_collect(batch):
 
 if __name__ == '__main__':
     dataset = VIGOR(area='same', train_test='train', val=True)
-    dataloader = DataLoader(dataset, batch_size=4, shuffle=True, collate_fn=val_data_collect)
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=False, collate_fn=val_data_collect)
     for i, (sat, grd, label, ground_yx) in enumerate(dataloader):
-        print(sat.shape)
-        print(grd.shape)
+        # print(sat.shape)
+        # print(grd.shape)
         print(label)
         print(ground_yx)
         break
+        # pass

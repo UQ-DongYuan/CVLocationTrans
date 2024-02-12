@@ -1,5 +1,5 @@
 from model import CVLocationTrans
-from read_semidata_VIGOR import VIGOR, val_data_collect
+from readdata_VIGOR import VIGOR, val_data_collect
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 import numpy as np
@@ -11,21 +11,22 @@ batch_size = 4
 stride = 8
 grid_size = (32, 32)
 resolution = 0.285   # 640 / 256 x 0.114
-semi_positive_index = [0, 1, 2, 3]
-area = 'same'
+# semi_positive_index = [0, 1, 2, 3]
+semi_positive_index = [0]  # only test positive satellite images
+area = 'cross'   # same or cross area for testing
 
 def main():
     distances = []
     torch.cuda.empty_cache()
     model = CVLocationTrans(d_model=256).to('cuda')
-    checkpoint_path = 'checkpoint/CVLocationTrans.pth'
+    checkpoint_path = 'checkpoint/CVLocationTrans_SAM_cross_area.pth'
     checkpoint = torch.load(checkpoint_path)
     model.load_state_dict(checkpoint['state_dict'])
     model.eval()
 
     for semi_index in semi_positive_index:
         print(f'processing semi positive: {semi_index}')
-        val_dataset = VIGOR(area=area, train_test='test', semi_index=semi_index)
+        val_dataset = VIGOR(area=area, train_test='test', val=False, semi_index=semi_index)
         val_dataloader = DataLoader(val_dataset, batch_size=4, num_workers=4, shuffle=False, drop_last=True, collate_fn=val_data_collect)
         with torch.set_grad_enabled(False):
             for i, (val_sat, val_grd, val_labels, val_ground_yx) in tqdm(enumerate(val_dataloader)):

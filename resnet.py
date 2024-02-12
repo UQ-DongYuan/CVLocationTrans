@@ -160,7 +160,7 @@ class ResNet(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
         if self.sat_grd == 'sat':
-            x = F.adaptive_avg_pool2d(x, (32, 32))
+            x = F.adaptive_max_pool2d(x, (32, 32))
         return x
 
 def resnet18(output_layers=None, pretrained=False, **kwargs):
