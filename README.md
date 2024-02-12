@@ -28,6 +28,10 @@ please follow the requirement to setup your running environment
 - einops == 0.6.1
 
 ### 2. Datasets
+VIGOR Dataset:
+Please follow the guidelines from https://github.com/Jeff-Zilence/VIGOR to download and prepare the dataset <br/> 
+
+Oxford RobotCar Dataset:
 
 
 ---
