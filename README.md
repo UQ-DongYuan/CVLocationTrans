@@ -6,7 +6,7 @@
 
 
 
-![](README_data/poster.png)
+![](wacv-2076.pdf)
 
 
 
