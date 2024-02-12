@@ -30,11 +30,11 @@ please follow the requirements to setup your running environment
 
 ### 2. Datasets
 **VIGOR Dataset:** <br>
-Please follow the guidelines from https://github.com/Jeff-Zilence/VIGOR to download and prepare the dataset. When using `readdata_VIGOR.py` to load images, please modify 'self.root' to your dataset storing directory.<br> 
+Please follow the guidelines from https://github.com/Jeff-Zilence/VIGOR to download and prepare the dataset. When using `readdata_VIGOR.py` to load images, please modify `self.root` to your dataset storing directory.<br> 
 <br>
 **Oxford RobotCar Dataset:** <br>
 Please contact the authors from https://github.com/tudelft-iv/CrossViewMetricLocalization/tree/main to get the processed Oxford RobotCar ground view images and the corresponding satellite images.
-Please download the `Oxford_split` directory for data splitting.
+Please download the `Oxford_split` directory for data splitting. When using `readdata_Oxford.py` to load training or testing data, please modify `self.grd_image_root` and `full_satellite_map` to your data storing directory.
 
 ---
 
