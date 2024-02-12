@@ -15,9 +15,9 @@ Cross-view image geo-localization aims to determine the locations of outdoor rob
 </p>
 
 ---
-### 1. Environemnt 
+### 1. Environment 
 <p align="justify">
-please follow the requirement to setup your running environment
+please follow the requirements to setup your running environment
 </p>
 
 - Python >= 3.9
@@ -28,10 +28,10 @@ please follow the requirement to setup your running environment
 - einops == 0.6.1
 
 ### 2. Datasets
-VIGOR Dataset:
-Please follow the guidelines from https://github.com/Jeff-Zilence/VIGOR to download and prepare the dataset <br/> 
-
-Oxford RobotCar Dataset:
+**VIGOR Dataset:** <br>
+Please follow the guidelines from https://github.com/Jeff-Zilence/VIGOR to download and prepare the dataset <br> 
+<br>
+**Oxford RobotCar Dataset:** <br>
 
 
 ---
